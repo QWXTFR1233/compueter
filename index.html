@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .calculator {
+            width: 400px;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(to right, #4a90e2, #63b3ed);
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .content {
+            padding: 20px;
+        }
+        
+        .display-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history {
+            height: 24px;
+            text-align: right;
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 5px;
+            overflow: hidden;
+        }
+        
+        .display {
+            text-align: right;
+            font-size: 36px;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            min-height: 50px;
+            overflow: hidden;
+            word-break: break-all;
+        }
+        
+        .buttons-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        
+        .btn {
+            border: none;
+            border-radius: 10px;
+            font-size: 20px;
+            font-weight: bold;
+            height: 60px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
+        
+        .btn:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-number {
+            background-color: #e0e0e0;
+            color: #000;
+        }
+        
+        .btn-operator {
+            background-color: #f0a000;
+            color: white;
+        }
+        
+        .btn-equals {
+            background-color: #ff7043;
+            color: white;
+        }
+        
+        .btn-clear {
+            background-color: #ff5252;
+            color: white;
+        }
+        
+        .btn-zero {
+            grid-column: span 2;
+        }
+        
+        .footer {
+            padding: 15px 20px;
+            background-color: rgba(0, 0, 0, 0.05);
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .menu-bar {
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .menu-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        .menu-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .shortcut-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .key {
+            font-family: 'Courier New', monospace;
+            background-color: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        
+        .close-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 10px 30px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        @media (max-width: 480px) {
+            .calculator {
+                width: 100%;
+                max-width: 400px;
+            }
+            
+            .btn {
+                height: 50px;
+                font-size: 18px;
+            }
+            
+            .display {
+                font-size: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="header">
+            <h1>Python 计算器 - HTML版</h1>
+        </div>
+        
+        <div class="content">
+            <div class="display-container">
+                <div class="history" id="history">0</div>
+                <div class="display" id="display">0</div>
+            </div>
+            
+            <div class="buttons-grid">
+                <!-- 第一行 -->
+                <button class="btn btn-clear" onclick="clearAll()">C</button>
+                <button class="btn btn-clear" onclick="clearEntry()">CE</button>
+                <button class="btn btn-operator" onclick="calculatePercentage()">%</button>
+                <button class="btn btn-operator" onclick="setOperation('÷')">÷</button>
+                
+                <!-- 第二行 -->
+                <button class="btn btn-number" onclick="addDigit('7')">7</button>
+                <button class="btn btn-number" onclick="addDigit('8')">8</button>
+                <button class="btn btn-number" onclick="addDigit('9')">9</button>
+                <button class="btn btn-operator" onclick="setOperation('×')">×</button>
+                
+                <!-- 第三行 -->
+                <button class="btn btn-number" onclick="addDigit('4')">4</button>
+                <button class="btn btn-number" onclick="addDigit('5')">5</button>
+                <button class="btn btn-number" onclick="addDigit('6')">6</button>
+                <button class="btn btn-operator" onclick="setOperation('−')">−</button>
+                
+                <!-- 第四行 -->
+                <button class="btn btn-number" onclick="addDigit('1')">1</button>
+                <button class="btn btn-number" onclick="addDigit('2')">2</button>
+                <button class="btn btn-number" onclick="addDigit('3')">3</button>
+                <button class="btn btn-operator" onclick="setOperation('+')">+</button>
+                
+                <!-- 第五行 -->
+                <button class="btn btn-number btn-zero" onclick="addDigit('0')">0</button>
+                <button class="btn btn-number" onclick="addDecimal()">.</button>
+                <button class="btn btn-operator" onclick="toggleSign()">±</button>
+                <button class="btn btn-equals" onclick="calculateResult()">=</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <div class="menu-bar">
+                <button class="menu-btn" onclick="showAbout()">关于</button>
+                <button class="menu-btn" onclick="showShortcuts()">快捷键</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 关于模态框 -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-content">
+            <div class="modal-header">关于 Python 计算器</div>
+            <p>版本: 1.0</p>
+            <p>基于Python tkinter版本转换而来</p>
+            <p>使用HTML、CSS和JavaScript实现</p>
+            <p>© 2026 HTML计算器</p>
+            <button class="close-btn" onclick="closeAbout()">确定</button>
+        </div>
+    </div>
+    
+    <!-- 快捷键模态框 -->
+    <div class="modal" id="shortcutsModal">
+        <div class="modal-content">
+            <div class="modal-header">键盘快捷键</div>
+            <div id="shortcutsList">
+                <div class="shortcut-item">
+                    <span class="key">0-9</span>
+                    <span>输入数字</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">.</span>
+                    <span>小数点</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">+</span>
+                    <span>加法</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">-</span>
+                    <span>减法</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">* 或 x</span>
+                    <span>乘法</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">/</span>
+                    <span>除法</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Enter 或 =</span>
+                    <span>计算结果</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">Backspace</span>
+                    <span>清除当前输入</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">C</span>
+                    <span>清除所有</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">%</span>
+                    <span>百分比</span>
+                </div>
+                <div class="shortcut-item">
+                    <span class="key">_ 或 `</span>
+                    <span>正负号切换</span>
+                </div>
+            </div>
+            <button class="close-btn" onclick="closeShortcuts()">确定</button>
+        </div>
+    </div>
+
+    <script>
+        // 计算器状态
+        let currentInput = "0";
+        let previousInput = "";
+        let currentOperation = null;
+        let resetInput = false;
+        let decimalUsed = false;
+        
+        // DOM元素
+        const displayElement = document.getElementById('display');
+        const historyElement = document.getElementById('history');
+        
+        // 更新显示
+        function updateDisplay() {
+            displayElement.textContent = currentInput;
+            
+            if (previousInput && currentOperation) {
+                // 转换操作符显示
+                let displayOp = currentOperation;
+                if (displayOp === '*') displayOp = '×';
+                if (displayOp === '/') displayOp = '÷';
+                if (displayOp === '-') displayOp = '−';
+                
+                historyElement.textContent = `${previousInput} ${displayOp}`;
+            } else {
+                historyElement.textContent = "";
+            }
+        }
+        
+        // 添加数字
+        function addDigit(digit) {
+            if (resetInput || currentInput === "0") {
+                currentInput = digit;
+                resetInput = false;
+            } else {
+                currentInput += digit;
+            }
+            
+            // 限制输入长度
+            if (currentInput.length > 12) {
+                currentInput = currentInput.substring(0, 12);
+            }
+            
+            updateDisplay();
+        }
+        
+        // 添加小数点
+        function addDecimal() {
+            if (!decimalUsed) {
+                if (resetInput || currentInput === "0") {
+                    currentInput = "0.";
+                    resetInput = false;
+                } else {
+                    currentInput += ".";
+                }
+                decimalUsed = true;
+                updateDisplay();
+            }
+        }
+        
+        // 清除当前输入
+        function clearEntry() {
+            currentInput = "0";
+            decimalUsed = false;
+            resetInput = false;
+            updateDisplay();
+        }
+        
+        // 清除所有
+        function clearAll() {
+            currentInput = "0";
+            previousInput = "";
+            currentOperation = null;
+            decimalUsed = false;
+            resetInput = false;
+            updateDisplay();
+        }
+        
+        // 切换正负号
+        function toggleSign() {
+            if (currentInput && currentInput !== "0") {
+                if (currentInput.startsWith('-')) {
+                    currentInput = currentInput.substring(1);
+                } else {
+                    currentInput = '-' + currentInput;
+                }
+                updateDisplay();
+            }
+        }
+        
+        // 设置运算操作
+        function setOperation(op) {
+            // 转换操作符
+            let actualOp = op;
+            if (op === '÷') actualOp = '/';
+            if (op === '×') actualOp = '*';
+            if (op === '−') actualOp = '-';
+            
+            // 如果有上一个操作未完成，先计算
+            if (currentOperation && !resetInput) {
+                calculateResult();
+            }
+            
+            // 将当前输入保存为上一个输入
+            previousInput = currentInput;
+            currentOperation = actualOp;
+            resetInput = true;
+            decimalUsed = false;
+            updateDisplay();
+        }
+        
+        // 计算百分比
+        function calculatePercentage() {
+            try {
+                const value = parseFloat(currentInput) / 100;
+                currentInput = formatNumber(value);
+                resetInput = true;
+                decimalUsed = currentInput.includes('.');
+                updateDisplay();
+            } catch (error) {
+                currentInput = "错误";
+                updateDisplay();
+            }
+        }
+        
+        // 计算结果
+        function calculateResult() {
+            try {
+                if (!currentOperation || !previousInput) {
+                    return;
+                }
+                
+                // 转换数值
+                const num1 = parseFloat(previousInput);
+                const num2 = parseFloat(currentInput);
+                let result = 0;
+                
+                // 执行运算
+                switch (currentOperation) {
+                    case '+':
+                        result = num1 + num2;
+                        break;
+                    case '-':
+                        result = num1 - num2;
+                        break;
+                    case '*':
+                        result = num1 * num2;
+                        break;
+                    case '/':
+                        if (num2 === 0) {
+                            throw new Error("除零错误");
+                        }
+                        result = num1 / num2;
+                        break;
+                    case '%':
+                        result = num1 * (num2 / 100);
+                        break;
+                }
+                
+                // 更新显示
+                currentInput = formatNumber(result);
+                previousInput = "";
+                currentOperation = null;
+                resetInput = true;
+                decimalUsed = currentInput.includes('.');
+                updateDisplay();
+                
+            } catch (error) {
+                if (error.message === "除零错误") {
+                    currentInput = "除零错误";
+                } else {
+                    currentInput = "错误";
+                }
+                previousInput = "";
+                currentOperation = null;
+                resetInput = true;
+                updateDisplay();
+            }
+        }
+        
+        // 格式化数字显示
+        function formatNumber(number) {
+            // 处理NaN和无限大
+            if (!isFinite(number)) {
+                return "错误";
+            }
+            
+            // 处理整数
+            if (Number.isInteger(number)) {
+                return number.toString();
+            }
+            
+            // 处理浮点数
+            let result = parseFloat(number.toFixed(10)).toString();
+            
+            // 移除尾随的零
+            if (result.includes('.')) {
+                result = result.replace(/(\.\d*?)0+$/, '$1');
+                if (result.endsWith('.')) {
+                    result = result.slice(0, -1);
+                }
+            }
+            
+            // 长度限制
+            if (result.length > 12) {
+                if (Math.abs(number) >= 1e12 || Math.abs(number) < 1e-6) {
+                    return number.toExponential(4);
+                } else {
+                    return result.substring(0, 12);
+                }
+            }
+            
+            return result;
+        }
+        
+        // 键盘事件处理
+        document.addEventListener('keydown', function(event) {
+            const key = event.key;
+            
+            if (key >= '0' && key <= '9') {
+                addDigit(key);
+            } else if (key === '.') {
+                addDecimal();
+            } else if (key === '+' || key === '-') {
+                setOperation(key);
+            } else if (key === '*' || key.toLowerCase() === 'x') {
+                setOperation('*');
+            } else if (key === '/') {
+                setOperation('/');
+            } else if (key === 'Enter' || key === '=') {
+                event.preventDefault();
+                calculateResult();
+            } else if (key === 'Backspace' || key === 'Delete') {
+                clearEntry();
+            } else if (key.toLowerCase() === 'c') {
+                if (event.ctrlKey) {
+                    // Ctrl+C 不处理
+                } else {
+                    clearAll();
+                }
+            } else if (key === '%') {
+                calculatePercentage();
+            } else if (key === '_' || key === '`') {
+                toggleSign();
+            }
+        });
+        
+        // 模态框功能
+        function showAbout() {
+            document.getElementById('aboutModal').style.display = 'flex';
+        }
+        
+        function closeAbout() {
+            document.getElementById('aboutModal').style.display = 'none';
+        }
+        
+        function showShortcuts() {
+            document.getElementById('shortcutsModal').style.display = 'flex';
+        }
+        
+        function closeShortcuts() {
+            document.getElementById('shortcutsModal').style.display = 'none';
+        }
+        
+        // 点击模态框外部关闭
+        window.addEventListener('click', function(event) {
+            const aboutModal = document.getElementById('aboutModal');
+            const shortcutsModal = document.getElementById('shortcutsModal');
+            
+            if (event.target === aboutModal) {
+                closeAbout();
+            }
+            if (event.target === shortcutsModal) {
+                closeShortcuts();
+            }
+        });
+        
+        // 初始化显示
+        updateDisplay();
+    </script>
+</body>
+</html>
